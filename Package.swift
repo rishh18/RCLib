@@ -4,22 +4,20 @@
 import PackageDescription
 
 let package = Package(
-    name: "JSON Fetcher",
+    name: "RCLib",
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "JSON Fetcher",
-            targets: ["JSON Fetcher"]),
+            name: "RCLib",
+            targets: ["RCLib"]),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "JSON Fetcher",
-            path: "Sources"),
+            name: "RCLib"),
         .testTarget(
-            name: "JSON FetcherTests",
-            dependencies: ["JSON Fetcher"],
-            path: "Tests"),
+            name: "RCLibTests",
+            dependencies: ["RCLib"]),
     ]
 )
