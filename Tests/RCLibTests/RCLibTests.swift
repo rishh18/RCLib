@@ -59,6 +59,7 @@ final class RCLibTests: XCTestCase {
     
     var networkManager: RCLib!
     var interactionManager: InteractionManager!
+    var dataFetcher: DataFetcher!
 
     
     override func setUpWithError() throws {
@@ -68,6 +69,7 @@ final class RCLibTests: XCTestCase {
         let session = URLSession(configuration: config)
         networkManager = RCLib(session: session)
         interactionManager = InteractionManager.shared
+        dataFetcher = DataFetcher(session: session)
     }
     
     override func tearDownWithError() throws {
@@ -347,4 +349,52 @@ final class RCLibTests: XCTestCase {
         // Verify that the retrieved data is nil
         XCTAssertNil(retrievedData, "Retrieved data should be nil for a nonexistent key")
     }
+    
+    func testRetrieveDataDecodingError() throws {
+        // Define a key for storing data
+        let key = "testDecodingErrorKey"
+        
+        // Create a mock data object and store it
+        let mockData = MockData(id: 1, name: "Test Name")
+        interactionManager.storeValue(mockData, forKey: key)
+        
+        // Attempt to retrieve the stored data as a different type (String instead of MockData)
+        // This should fail and trigger the catch block
+        let retrievedData: String? = interactionManager.retrieveValue(forKey: key, type: String.self)
+        
+        // Verify that the retrieved data is nil due to the decoding error
+        XCTAssertNil(retrievedData, "Decoding should fail, resulting in a nil return value")
+    }
+    
+    func testNoDataReceived() throws {
+        // Define the URL for the mock data
+        let url = URL(string: "https://api.example.com/nodata")!
+        
+        // Mock URLSession response with no data
+        URLProtocolMock.testURLs = [url: Data()] // Provide empty Data instead of nil
+        
+        // Set the HTTP response to indicate success (status code 200)
+        URLProtocolMock.response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)
+        
+        // Ensure no error is returned
+        URLProtocolMock.error = nil
+        
+        // Create an expectation for the asynchronous fetch operation
+        let expectation = self.expectation(description: "Fetching data fails due to no data received")
+        
+        // Call the fetchJSON method from the dataFetcher
+        dataFetcher.fetchJSON(from: url, forKey: "noDataKey") { (result: Result<MockData, Error>) in
+            switch result {
+            case .success:
+                XCTFail("Expected failure, got success")
+            case .failure(let error):
+                XCTAssertNotNil(error, "Expected error, got nil")
+                expectation.fulfill()
+            }
+        }
+        
+        // Wait for the expectations to be fulfilled or timeout
+        waitForExpectations(timeout: 5, handler: nil)
+    }
+
 }
