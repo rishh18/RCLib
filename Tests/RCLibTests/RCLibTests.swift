@@ -57,7 +57,7 @@ class URLProtocolMock: URLProtocol {
 
 final class RCLibTests: XCTestCase {
     
-    var networkManager: RCLib!
+    var networkManager: RCLib?
     var interactionManager: InteractionManager!
     var dataFetcher: DataFetcher!
 
@@ -67,7 +67,8 @@ final class RCLibTests: XCTestCase {
         let config = URLSessionConfiguration.default
         config.protocolClasses = [URLProtocolMock.self]
         let session = URLSession(configuration: config)
-        networkManager = RCLib(session: session)
+        networkManager = RCLib(url: URL(string: "https://api.example.com/mockdata")!, key: "mockData") {(result: Result<MockData, Error>) in
+        }
         interactionManager = InteractionManager.shared
         dataFetcher = DataFetcher(session: session)
     }
@@ -97,7 +98,7 @@ final class RCLibTests: XCTestCase {
         let expectation = self.expectation(description: "Fetching data succeeds")
         
         // Call the fetchJSON method from the network manager
-        networkManager.fetchJSON(from: url, forKey: "mockData") { (result: Result<MockData, Error>) in
+        dataFetcher.fetchJSON(from: url, forKey: "mockData") { (result: Result<MockData, Error>) in
             switch result {
             case .success(let data):
                 // Verify that the fetched data matches the mock data
@@ -131,7 +132,7 @@ final class RCLibTests: XCTestCase {
         let expectation = self.expectation(description: "Fetching data fails due to network error")
         
         // Call the fetchJSON method from the network manager
-        networkManager.fetchJSON(from: url, forKey: "mockData") { (result: Result<MockData, Error>) in
+        dataFetcher.fetchJSON(from: url, forKey: "mockData") { (result: Result<MockData, Error>) in
             switch result {
             case .success:
                 // If the fetch succeeds, fail the test since a network error was expected
@@ -169,7 +170,7 @@ final class RCLibTests: XCTestCase {
         let expectation = self.expectation(description: "Fetching data fails due to decoding error")
         
         // Call the fetchJSON method from the network manager
-        networkManager.fetchJSON(from: url, forKey: "mockData") { (result: Result<MockData, Error>) in
+        dataFetcher.fetchJSON(from: url, forKey: "mockData") { (result: Result<MockData, Error>) in
             switch result {
             case .success:
                 // If the fetch succeeds, fail the test since a decoding error was expected
@@ -205,7 +206,7 @@ final class RCLibTests: XCTestCase {
         let expectation = self.expectation(description: "Fetching data fails due to nil data response")
         
         // Call the fetchJSON method from the network manager
-        networkManager.fetchJSON(from: url, forKey: "mockData") { (result: Result<MockData, Error>) in
+        dataFetcher.fetchJSON(from: url, forKey: "mockData") { (result: Result<MockData, Error>) in
             switch result {
             case .success:
                 // If the fetch succeeds, fail the test since a nil data response was expected
@@ -334,7 +335,7 @@ final class RCLibTests: XCTestCase {
         InteractionManager.shared.storeValue(mockData, forKey: key)
         
         // Retrieve the data using NetworkManager's method
-        let retrievedData: MockData? = networkManager.retrieveCachedData(forKey: key, type: MockData.self)
+        let retrievedData: MockData? = networkManager?.retrieveCachedData(forKey: key, type: MockData.self)
         
         // Verify the retrieved data matches the stored data
         XCTAssertEqual(retrievedData, mockData, "Stored data should be equal to retrieved data")
@@ -344,7 +345,7 @@ final class RCLibTests: XCTestCase {
         let key = "nonexistentKey"
         
         // Try to retrieve data that doesn't exist
-        let retrievedData: MockData? = networkManager.retrieveCachedData(forKey: key, type: MockData.self)
+        let retrievedData: MockData? = networkManager?.retrieveCachedData(forKey: key, type: MockData.self)
         
         // Verify that the retrieved data is nil
         XCTAssertNil(retrievedData, "Retrieved data should be nil for a nonexistent key")
