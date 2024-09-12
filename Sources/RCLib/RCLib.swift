@@ -10,19 +10,10 @@ public class RCLib {
     // Instance of DataFetcher that handles the actual network request and JSON parsing.
     private let dataFetcher: DataFetcher
     
-    // Shared singleton instance of RCLib for easy access across the app.
-    public static let shared = RCLib()
-    
     // Initializer for RCLib, allowing custom URLSession injection for testing or other purposes.
     // Defaults to URLSession.shared.
-    public init(session: URLSession = .shared) {
+    public init<T: Codable>(url: URL, key: String, session: URLSession = .shared, completion: @escaping (Result<T, Error>) -> Void) {
         self.dataFetcher = DataFetcher(session: session)
-    }
-    
-    // Method to fetch JSON data from a specified URL.
-    // The fetched data is decoded into a Codable type (T) and stored locally using the provided key.
-    // Completion handler returns the result of the fetch operation, either success with the decoded data or failure with an error.
-    public func fetchJSON<T: Codable>(from url: URL, forKey key: String, completion: @escaping (Result<T, Error>) -> Void) {
         dataFetcher.fetchJSON(from: url, forKey: key, completion: completion)
     }
     
@@ -32,4 +23,3 @@ public class RCLib {
         return InteractionManager.shared.retrieveValue(forKey: key, type: type)
     }
 }
-
